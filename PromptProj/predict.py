@@ -55,11 +55,11 @@ def predict_one_sample(args, device, model, tokenizer, template, text, words_ids
     # 将prompt模板与评论数据融合
     text = "[CLS]" + template.replace("{mask}", "[MASK]").replace("{text}", text) + "[SEP]"
     # 对数据进行tokenize分词
-    text_tokens = tokenizer.tokenize(text)
+    text_tokens = tokenizer.tokenize(text) # list
     # 获取[MASK]位置，用于填词
-    mask_index = text_tokens.index("[MASK]")
+    mask_index = text_tokens.index("[MASK]") # int
     # 生成模型训练所需的input_ids和attention_mask
-    input_ids = tokenizer.convert_tokens_to_ids(text_tokens)
+    input_ids = tokenizer.convert_tokens_to_ids(text_tokens) # list[int]
     attention_mask = [1] * len(input_ids)
     # 生成推理模型所需输入矩阵
     input_ids = torch.tensor([input_ids]).to(device)
@@ -76,8 +76,9 @@ def predict_one_sample(args, device, model, tokenizer, template, text, words_ids
 def set_args():
     """设置模型预测所需参数"""
     parser = argparse.ArgumentParser()
+    default_model_path = r"output_dir\checkpoint-1175"
     parser.add_argument('--device', default='0', type=str, help='设置训练或测试时使用的显卡')
-    parser.add_argument('--model_path', default='prompt_model/', type=str, help='prompt模型文件路径')
+    parser.add_argument('--model_path', default=default_model_path, type=str, help='prompt模型文件路径')
     parser.add_argument('--max_len', type=int, default=256, help='输入模型的最大长度，要比config中n_ctx小')
     parser.add_argument('--token_handler', type=str, default="mean", help='答案映射标签多token策略')
     parser.add_argument('--template', type=str, default="{mask}满意。{text}", help='prompt模板')

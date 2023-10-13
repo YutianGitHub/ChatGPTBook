@@ -10,12 +10,14 @@
             
 """
 import json
+
+import overrides
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 import torch
 import os
 import logging
-
+from typing import List,Dict,Tuple,AnyStr,NoReturn,Any,Union,Optional
 logger = logging.getLogger(__name__)
 
 
@@ -89,12 +91,13 @@ class PromptDataSet(Dataset):
         # 返回标签词id及掩码矩阵，用于答案空间映射
         return torch.tensor(words_ids), torch.tensor(words_ids_mask)
 
-    def load_data(self, path_file):
+    def load_data(self, path_file:AnyStr)->Dataset[List]:
         """
         加载原始数据，生成数据处理后的数据
         Args:
             path_file: 原始数据路径
         Returns:
+            dataset:List[Dict]
         """
         data_set = []
         # 遍历数据文件
@@ -110,12 +113,15 @@ class PromptDataSet(Dataset):
                                  "label": label, "text": sample["text"]})
         return data_set
 
-    def convert_feature(self, text):
+    def convert_feature(self, text:AnyStr)->Tuple[List,List,List]:
         """
-        数据处理函数
+        数据处理函数,转换str为idx
         Args:
             text: 评论文本数据
         Returns:
+            Tuple{
+
+            }
         """
         # 当评论数据过长时，进行切断操作
         if len(text) > self.max_len - len(self.template):
@@ -139,19 +145,25 @@ class PromptDataSet(Dataset):
     def __len__(self):
         """获取数据总长度"""
         return len(self.data_set)
-
+    @overrides.override
     def __getitem__(self, idx):
         """获取每个实例数据"""
         instance = self.data_set[idx]
         return instance
 
 
-def collate_func(batch_data):
+def collate_func(batch_data:List[Dict])->Dict:
     """
     DataLoader所需的collate_fun函数，将数据处理成tensor形式
     Args:
         batch_data: batch数据
     Returns:
+        Dict(tensor){
+            input_ids,
+            attention_mask,
+            mask_index:[MASK]位置的index,
+            label
+        }
     """
     batch_size = len(batch_data)
     # 如果batch_size为0，则返回一个空字典

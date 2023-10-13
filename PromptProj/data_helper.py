@@ -13,7 +13,7 @@ import json
 import os
 import random
 import pandas as pd
-
+import tqdm
 
 def data_process(path, save_train_path, save_test_path):
     """
@@ -30,7 +30,7 @@ def data_process(path, save_train_path, save_test_path):
     # 读取csv文件
     df = pd.read_csv(path)
     # 遍历文件每一行
-    for i, row in df.iterrows():
+    for i, row in tqdm.tqdm(df.iterrows(),desc="读取csv文件",unit="row"):
         if row["label"] == 1:
             label = "正向"
         else:
@@ -46,7 +46,7 @@ def data_process(path, save_train_path, save_test_path):
     fin_test = open(save_test_path, "w", encoding="utf-8")
     pos_n = 0
     neg_n = 0
-    for sample in data:
+    for sample in tqdm.tqdm(data,desc="保存数据",unit="samples"):
         # 在训练集中保存20个正样本数据
         if pos_n < 20 and sample["label"] == "正向":
             fin_train.write(json.dumps(sample, ensure_ascii=False) + "\n")

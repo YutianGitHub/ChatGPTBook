@@ -9,6 +9,8 @@
     文件说明：
             
 """
+import time
+
 import torch
 import os
 import random
@@ -32,6 +34,9 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+def ptunning(model,device,train_data,test_data,args,tokenizer):
+    pass
 
 def train(model, device, train_data, test_data, args, tokenizer):
     """
@@ -88,6 +93,7 @@ def train(model, device, train_data, test_data, args, tokenizer):
     model.train()
     tr_loss, logging_loss, min_loss = 0.0, 0.0, 0.0
     global_step = 0
+
     words_ids = train_data.words_ids.to(device)
     words_ids_mask = train_data.words_ids_mask.to(device)
     # 开始训练模型
@@ -197,18 +203,21 @@ def evaluate(model, device, test_data, args):
 def set_args():
     """设置训练模型所需参数"""
     parser = argparse.ArgumentParser()
+
+    default_model_path = r"C:\Users\Administrator\Desktop\研究生相关\项目-问题文本分类\Bert-Pytorch-Chinese-TextClassification-master\bert\bert-tiny-chinese-4L"
+
     parser.add_argument('--device', default='0', type=str, help='设置训练或测试时使用的显卡')
     parser.add_argument('--train_file_path', default='data/train.json', type=str, help='训练数据')
     parser.add_argument('--test_file_path', default='data/test.json', type=str, help='测试数据')
-    parser.add_argument('--pretrained_model_path', default="pretrain_model", type=str, help='预训练的BERT模型的路径')
+    parser.add_argument('--pretrained_model_path', default=default_model_path, type=str, help='预训练的BERT模型的路径')
     parser.add_argument('--data_dir', default='data/', type=str, help='生成缓存数据的存放路径')
-    parser.add_argument('--num_train_epochs', default=10, type=int, help='模型训练的轮数')
-    parser.add_argument('--train_batch_size', default=4, type=int, help='训练时每个batch的大小')
+    parser.add_argument('--num_train_epochs', default=5, type=int, help='模型训练的轮数')
+    parser.add_argument('--train_batch_size', default=32, type=int, help='训练时每个batch的大小')
     parser.add_argument('--test_batch_size', default=16, type=int, help='测试时每个batch的大小')
     parser.add_argument('--learning_rate', default=5e-5, type=float, help='模型训练时的学习率')
     parser.add_argument('--warmup_proportion', default=0.1, type=float, help='warm up概率，即训练总步长的百分之多少，进行warm up')
     parser.add_argument('--adam_epsilon', default=1e-8, type=float, help='Adam优化器的epsilon值')
-    parser.add_argument('--logging_steps', default=5, type=int, help='保存训练日志的步数')
+    parser.add_argument('--logging_steps', default=10, type=int, help='保存训练日志的步数')
     parser.add_argument('--gradient_accumulation_steps', default=1, type=int, help='梯度积累')
     parser.add_argument('--max_grad_norm', default=1.0, type=float, help='')
     parser.add_argument('--output_dir', default='output_dir/', type=str, help='模型输出路径')
@@ -216,8 +225,8 @@ def set_args():
     parser.add_argument('--max_len', type=int, default=256, help='输入模型的最大长度，要比config中n_ctx小')
     parser.add_argument('--token_handler', type=str, default="mean", help='答案映射标签多token策略')
     parser.add_argument('--template', type=str, default="{mask}满意。{text}", help='prompt模板')
-    parser.add_argument('--pos_words', type=list, default=["很", "非常"], help='答案映射正标签对应标签词')
-    parser.add_argument('--neg_words', type=list, default=["不"], help='答案映射负标签对应标签词')
+    parser.add_argument('--pos_words', type=list, default=["很", "非常","比较","挺"], help='答案映射正标签对应标签词')
+    parser.add_argument('--neg_words', type=list, default=["不","不太"], help='答案映射负标签对应标签词')
     parser.add_argument('--requires_grad_params', type=list, default=["cls.predictions"], help='模型训练参数')
     return parser.parse_args()
 
