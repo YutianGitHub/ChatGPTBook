@@ -38,6 +38,7 @@ class GPT2DataSet(Dataset):
         self.tokenizer = tokenizer
         # space_id表示空格标记，由于一些标题中带有空格，如果直接使用tokenizer进行分词，会导致空格消失，会显得标题很奇怪
         # 但是又不方便同一替换成任意一个标点，因此将其用[unused11]替换。
+        # 编码把space 换成[unused11]，解码会解出并替换为space
         self.space_id = self.tokenizer.convert_tokens_to_ids("[unused11]")
         self.max_len = max_len
         self.title_max_len = title_max_len
@@ -77,6 +78,7 @@ class GPT2DataSet(Dataset):
         Returns:
         """
         # 对正文进行tokenizer.tokenize分词
+        # List[str]
         content_tokens = self.tokenizer.tokenize(sample["content"])
         # 对摘要进行tokenizer.tokenize分词，注意tokenizer中已经将[unused11]作为一个分隔符，不会切割成多个字符
         title_tokens = self.tokenizer.tokenize(sample["title"].replace(" ", "[unused11]"))
@@ -87,7 +89,8 @@ class GPT2DataSet(Dataset):
         if len(content_tokens) > self.max_len - len(title_tokens) - 3:
             content_tokens = content_tokens[:self.max_len - len(title_tokens) - 3]
         # 生成模型所需的input_ids和mask
-
+        # input_ids = [CLS] + [Tokens] + [SEP] + [Labels] + [SEP]
+        # mask =      [0]   + [0]      + [1]   + [1]      + [1]
         input_ids = [self.tokenizer.cls_token_id] + self.tokenizer.convert_tokens_to_ids(content_tokens) + [
             self.tokenizer.sep_token_id] + self.tokenizer.convert_tokens_to_ids(title_tokens) + [
                         self.tokenizer.sep_token_id]
