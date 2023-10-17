@@ -90,7 +90,7 @@ class GPT2DataSet(Dataset):
             content_tokens = content_tokens[:self.max_len - len(title_tokens) - 3]
         # 生成模型所需的input_ids和mask
         # input_ids = [CLS] + [Tokens] + [SEP] + [Labels] + [SEP]
-        # mask =      [0]   + [0]      + [1]   + [1]      + [1]
+        # mask      = [0]   + [0]      + [1]   + [1]      + [1]
         input_ids = [self.tokenizer.cls_token_id] + self.tokenizer.convert_tokens_to_ids(content_tokens) + [
             self.tokenizer.sep_token_id] + self.tokenizer.convert_tokens_to_ids(title_tokens) + [
                         self.tokenizer.sep_token_id]
@@ -100,6 +100,7 @@ class GPT2DataSet(Dataset):
         assert len(input_ids) == len(mask)
         # 判断input_ids长度是否小于等于最大长度
         assert len(input_ids) <= self.max_len
+        # return Tuple(List[int], List[int])
         return input_ids, mask
 
     def __len__(self):
@@ -114,7 +115,7 @@ def collate_func(batch_data):
     """
     DataLoader所需的collate_fun函数，将数据处理成tensor形式
     Args:
-        batch_data: batch数据
+        batch_data: batch数据, Iterable[Dict{input_ids, mask}]
     Returns:
     """
     batch_size = len(batch_data)

@@ -22,8 +22,8 @@ def set_args():
     """设置模型预测所需参数"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', default='0', type=str, help='设置预测时使用的显卡,使用CPU设置成-1即可')
-    parser.add_argument('--model_path', default='summary_model/', type=str, help='模型文件路径')
-    parser.add_argument('--batch_size', default=4, type=int, help='生成摘要的个数')
+    parser.add_argument('--model_path', default=r"pretrain_model/", type=str, help='模型文件路径')
+    parser.add_argument('--batch_size', default=1, type=int, help='生成摘要的个数')
     parser.add_argument('--generate_max_len', default=64, type=int, help='生成摘要的最大长度')
     parser.add_argument('--repetition_penalty', default=1.4, type=float, help='重复处罚率')
     parser.add_argument('--top_k', default=8, type=float, help='解码时保留概率最高的多少个标记')
@@ -71,7 +71,7 @@ def top_k_top_p_filtering(logits, top_k, top_p, filter_value=-float("Inf")):
     return logits
 
 
-def predict_one_sample(model, tokenizer, device, args, content):
+def predict_one_sample(model:GPT2LMHeadModel, tokenizer, device, args, content):
     """
     对单个样本进行预测
     Args:
@@ -103,10 +103,12 @@ def predict_one_sample(model, tokenizer, device, args, content):
     finish_set = set()
     with torch.no_grad():
         # 遍历生成摘要最大长度
+        pkv = None
         for _ in range(args.generate_max_len):
-            outputs = model(input_ids=input_tensors)
+            outputs = model(input_ids=input_tensors,past_key_values=pkv)
             # 获取预测结果序列的最后一个标记，next_token_logits size：[batch_size, vocab_size]
             next_token_logits = outputs[0][:, -1, :]
+            pkv = outputs[-1]
             # 对batch_size进行遍历，将词表中出现在序列中的词的概率进行惩罚
             for index in range(args.batch_size):
                 for token_id in set([token_ids[index] for token_ids in generated]):
@@ -170,10 +172,11 @@ def main():
 
     while True:
         content = input("输入的正文为：")
+        content = "城市绿化中，科学合理地园林植物配置，能够有效地发挥园林植物的积极作用。本文通过分析园林植物在城市绿化中的配置的现状，提出了相应的解决园林植物配置存在的问题的策略，并简单介绍了园林植物配置的原则。"
         titles = predict_one_sample(model, tokenizer, device, args, content)
         for i, title in enumerate(titles):
             print("生成的第{}个摘要为：{}".format(i + 1, title))
-
+        break
 
 if __name__ == '__main__':
     main()

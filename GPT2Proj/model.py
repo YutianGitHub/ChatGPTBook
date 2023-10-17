@@ -9,6 +9,7 @@
     文件说明：
             
 """
+import torch
 from torch.nn import CrossEntropyLoss
 import torch.nn as nn
 from transformers.models.gpt2 import GPT2PreTrainedModel, GPT2Model
@@ -34,7 +35,7 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
     def set_output_embeddings(self, new_embeddings):
         self.lm_head = new_embeddings
 
-    def forward(self, input_ids=None, labels=None, mask=None):
+    def forward(self, input_ids=None, labels=None, mask=None,past_key_values=None):
         """
         前向函数，计算GPT2预测结果值
         Args:
@@ -46,16 +47,18 @@ class GPT2LMHeadModel(GPT2PreTrainedModel):
 
         """
         # 获取GPT2模型的输出结果
-        transformer_outputs = self.transformer(input_ids)
+        transformer_outputs = self.transformer(input_ids, past_key_values=past_key_values)
         # 获取GPT2模型的最后一层的隐层节点状态，size:[batch_size, sequence_length, config.n_embd]
         hidden_states = transformer_outputs[0]
+        pkv:torch.Tensor = transformer_outputs[1]
         # 预测隐层节点状态中的每一个token的下一个token，size:[batch_size, sequence_length, config.vocab_size]
         lm_logits = self.lm_head(hidden_states)
         # 拼接输出结果
-        outputs = (lm_logits,)
+        outputs = (lm_logits,pkv)
         # 如果labels不为None时，计算损失值loss，并拼接到输出结果中
         if labels is not None:
             # 计算loss时，获取新的标签，size:[batch_size, sequence_length]
+            # label : [0,..., 102,..., 102, ...,0]
             labels = labels * mask
             # 对预测结果和标签进行偏移操作
             # GPT2的生成机制为通过前面的token，预测下一个token；并且labels与input_ids相同，
